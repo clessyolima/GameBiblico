@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BookMarked, Pause, Timer, X } from "lucide-react";
 
 import styles from "./Jogatina.module.scss";
@@ -7,9 +7,6 @@ import ModalBase from "../../components/ModalBase";
 import livros from "../../utils/livros";
 import type { Livro } from "../../interfaces/Livros";
 import { useNavigate } from "react-router-dom";
-
-// Configurações da página
-const tempoAoIniciar = new Date().getTime(); // Tempo inicial da partida
 
 const embaralharLivros = (arg: Livro[]) => {
   const a = arg.slice();
@@ -20,66 +17,62 @@ const embaralharLivros = (arg: Livro[]) => {
   return a;
 }; // Embaralhar a lista de Livros da Bíblia
 
-const livrosRestantesNaLista = embaralharLivros(livros); // Mostra somente os livros não selecionados
-
 export default function Jogatina() {
   const navigate = useNavigate();
   const [mostrarModal, setMostrarModal] = useState(false);
-
-  const [livro, setLivro] = useState<Livro>(); // Mostrar em tela 1 livro dos 66
+  const [pausada, setPausada] = useState(false);
+  const [livrosDaPartida] = useState<Livro[]>(() => embaralharLivros(livros));
+  const [indiceLivro, setIndiceLivro] = useState(0);
   const [decorrente, setDecorrente] = useState(0); // Tempo decorrido na partida
   const [faltante, setFaltante] = useState(100); // Tempo que falta para acabar a partida ( 5 segundos )
+  const tempoAoIniciar = useRef(0);
+  const livro = livrosDaPartida[indiceLivro];
+  const livrosRestantes = livrosDaPartida.length - indiceLivro - 1;
 
   function proximoLivro() {
-    if (livrosRestantesNaLista.length === 0) return fimDaPartida(); // Finaliza a partida por não existir próximo livro
-
-    const livroSelecionado = livrosRestantesNaLista.splice(0, 1);
-    setLivro(livroSelecionado[0]);
-  } // Depois dos livros estarem sortido, seleciona sempre o primeiro item.
-
-  function tempoDePartida() {
-    const tempoAtual = new Date().getTime();
-
-    const tempoDecorrido = Number(((tempoAtual - tempoAoIniciar) / 1000).toFixed(1));
-    setDecorrente(tempoDecorrido);
-  } // Contador de tempo
-
-  function tempoRegressivo(resposta: boolean) {
-    if (resposta) {
-      return setFaltante(100);
-    } else {
-      setFaltante(t => t - 2);
-      if (faltante <= 0) fimDaPartida();
+    if (indiceLivro >= livrosDaPartida.length - 1) {
+      fimDaPartida();
+      return;
     }
 
-  } // Contagem regressiva para finalizar a partida
+    setIndiceLivro((indiceAtual) => indiceAtual + 1);
+  } // Depois dos livros estarem sortido, seleciona sempre o primeiro item.
 
   function correcao(testamentoEscolhido: string) {
     const testamentoAtual = livro?.testamento;
     if (testamentoAtual === testamentoEscolhido) {
       proximoLivro();
-      tempoRegressivo(true);
+      setFaltante(100);
       return;
     };
     fimDaPartida(); // Finaliza a partida por resposta errada
   } // Checagem se o Testamento escolhido corresponde com o Livro Atual
 
-  function fimDaPartida() {
-    // navigate("/final", /*{ replace: true }*/);
-  } // Finalizar partida
+  const fimDaPartida = useCallback(() => {
+    navigate("/final", {
+      replace: true,
+      state: { tempo: decorrente }
+    });
+  }, [decorrente, navigate]); // Finalizar partida
 
   useEffect(() => {
-    const contador = setTimeout(() => {
-      tempoDePartida();
-      tempoRegressivo(false);
-    }, 100);
-
-    if (decorrente >= 0.1 && decorrente <= 0.2) {
-      proximoLivro();
+    if (pausada) return;
+    if (tempoAoIniciar.current === 0) {
+      tempoAoIniciar.current = Date.now();
     }
 
+    const contador = setTimeout(() => {
+      const tempoAtual = Number(((Date.now() - tempoAoIniciar.current) / 1000).toFixed(1));
+      setDecorrente(tempoAtual);
+      setFaltante((tempoRestante) => Math.max(0, tempoRestante - 2));
+    }, 100);
+
     return () => clearTimeout(contador);
-  }, [decorrente]); // Iniciar partida e Cronômetro
+  }, [decorrente, pausada]);
+
+  useEffect(() => {
+    if (faltante === 0) fimDaPartida();
+  }, [faltante, fimDaPartida]);
 
   return (
     <main className={styles.escopo}>
@@ -98,7 +91,7 @@ export default function Jogatina() {
         <div className={styles.indicadores}>
           <div className={styles.quantidadeFaltanteDeLivros}>
             <BookMarked size={18} strokeWidth={2.5} />
-            <span>{livrosRestantesNaLista.length}</span>
+            <span>{livrosRestantes}</span>
           </div>
 
           <span className={styles.nomeDoLivroEmTela}>{livro?.nome}</span>
@@ -111,12 +104,18 @@ export default function Jogatina() {
 
         <div className={styles.gatilhosDaJogatina}>
           <button
-            onClick={() => setMostrarModal(true)}
+            onClick={() => {
+              setPausada(true);
+              setMostrarModal(true);
+            }}
           >
             <X size={26} strokeWidth={3} />
           </button>
           <button
-            onClick={() => setMostrarModal(true)}
+            onClick={() => {
+              setPausada(true);
+              setMostrarModal(true);
+            }}
           >
             <Pause size={24} strokeWidth={3} />
           </button>
@@ -131,7 +130,14 @@ export default function Jogatina() {
       </section>
 
       {mostrarModal
-        ? <ModalBase acaoModal="sair" />
+        ? <ModalBase
+            acaoModal="sair"
+            onSair={() => navigate("/", { replace: true })}
+            onFechar={() => {
+              setPausada(false);
+              setMostrarModal(false);
+            }}
+          />
         : false
       }
     </main>

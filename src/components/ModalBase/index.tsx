@@ -5,9 +5,11 @@ type AcaoModal = "sair" | "pausar";
 
 type ModalBaseProps = {
   acaoModal: AcaoModal;
+  onSair?: () => void;
+  onFechar?: () => void;
 }
 
-export default function ModalBase({ acaoModal }: ModalBaseProps) {
+export default function ModalBase({ acaoModal, onSair, onFechar }: ModalBaseProps) {
   const acao = acaoModal === "sair" ? true : false;
 
   return (
@@ -47,12 +49,13 @@ export default function ModalBase({ acaoModal }: ModalBaseProps) {
           <button
             type="button"
             className={`${styles.acaoPrincipal} ${acao ? styles.acaoSair : styles.acaoPausar}`}
+            onClick={acao ? onSair : onFechar}
           >{
             acao
               ? "Sair"
               : "Retomar"  
           }</button>
-          <button type="button" className={styles.acaoSecundaria}>{
+          <button type="button" className={styles.acaoSecundaria} onClick={onFechar}>{
             acao
               ? "Ficar"
               : "Sair"
