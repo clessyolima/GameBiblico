@@ -28,26 +28,35 @@ export default function Jogatina() {
   const [decorrente, setDecorrente] = useState(0); // Tempo decorrido na partida
   const [faltante, setFaltante] = useState(100); // Tempo que falta para acabar a partida ( 5 segundos )
   const tempoAoIniciar = useRef(0);
+  const acertosRef = useRef(0);
+  const partidaFinalizadaRef = useRef(false);
   const livro = livrosDaPartida[indiceLivro];
   const livrosRestantes = livrosDaPartida.length - indiceLivro - 1;
 
-  const fimDaPartida = useCallback(() => {
+  const fimDaPartida = useCallback((livroErrado?: string) => {
+    if (partidaFinalizadaRef.current) return;
+    partidaFinalizadaRef.current = true;
+
     const jogador = obterOuCriarJogadorLocal();
     const jogadorDaPartida = {
       ...jogador,
       tempo: decorrente,
+      acertos: acertosRef.current,
       criado_em: new Date().toISOString(),
     };
 
     window.localStorage.setItem("jogador", JSON.stringify(jogadorDaPartida));
-    salvarJogadorNaClassificacao(jogadorDaPartida).catch((erro: unknown) => {
-      console.error("Não foi possível salvar a partida:", erro);
+    const navegarParaResumo = () => navigate("/final", {
+      replace: true,
+      state: { tempo: decorrente, livroErrado },
     });
 
-    navigate("/final", {
-      replace: true,
-      state: { tempo: decorrente }
-    });
+    salvarJogadorNaClassificacao(jogadorDaPartida)
+      .then(navegarParaResumo)
+      .catch((erro: unknown) => {
+        console.error("Não foi possível salvar a partida:", erro);
+        navegarParaResumo();
+      });
   }, [decorrente, navigate]);
 
   const proximoLivro = useCallback(() => {
@@ -62,12 +71,13 @@ export default function Jogatina() {
   const correcao = useCallback((testamentoEscolhido: string) => {
     const testamentoAtual = livro?.testamento;
     if (testamentoAtual === testamentoEscolhido) {
+      acertosRef.current += 1;
       proximoLivro();
       setFaltante(100);
       return;
     };
-    fimDaPartida(); // Finaliza a partida por resposta errada
-  }, [fimDaPartida, livro?.testamento, proximoLivro]); // Checagem se o Testamento escolhido corresponde com o Livro Atual
+    fimDaPartida(livro?.nome); // Finaliza a partida por resposta errada
+  }, [fimDaPartida, livro?.nome, livro?.testamento, proximoLivro]); // Checagem se o Testamento escolhido corresponde com o Livro Atual
 
   useEffect(() => {
     if (pausada) return;
@@ -95,12 +105,12 @@ export default function Jogatina() {
       if (pausada || mostrarModal) return;
       if (evento.repeat) return;
 
-      if (evento.key === "ArrowUp") {
+      if (evento.key === "ArrowLeft") {
         evento.preventDefault();
         correcao("antigo");
       }
 
-      if (evento.key === "ArrowDown") {
+      if (evento.key === "ArrowRight") {
         evento.preventDefault();
         correcao("novo");
       }
@@ -167,13 +177,13 @@ export default function Jogatina() {
 
       {mostrarModal
         ? <ModalBase
-            acaoModal="sair"
-            onSair={() => navigate("/", { replace: true })}
-            onFechar={() => {
-              setPausada(false);
-              setMostrarModal(false);
-            }}
-          />
+          acaoModal="sair"
+          onSair={() => navigate("/", { replace: true })}
+          onFechar={() => {
+            setPausada(false);
+            setMostrarModal(false);
+          }}
+        />
         : false
       }
     </main>

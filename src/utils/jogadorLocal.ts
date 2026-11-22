@@ -1,7 +1,6 @@
 import type { Jogador } from "../interfaces/Jogador";
 
 import { avatares } from "./avatares";
-import nomeJogadores from "./nomeJogadores";
 
 const CHAVE_ARMAZENAMENTO = "jogador";
 
@@ -13,11 +12,6 @@ function gerarIdJogador() {
   return `${Math.floor(100_000_000 + Math.random() * 900_000_000)}`;
 }
 
-function sortearNomeJogador() {
-  const indice = Math.floor(Math.random() * nomeJogadores.length);
-  return nomeJogadores[indice].nome;
-}
-
 function sortearAvatarJogador() {
   const indice = Math.floor(Math.random() * avatares.length);
   return indice;
@@ -25,9 +19,10 @@ function sortearAvatarJogador() {
 
 function criarJogadorLocal(): Jogador {
   return {
-    nome: sortearNomeJogador(),
+    nome: "Jogador",
     id: gerarIdJogador(),
     tempo: 0,
+    acertos: 0,
     avatar: sortearAvatarJogador(),
     criado_em: new Date().toISOString(),
   };

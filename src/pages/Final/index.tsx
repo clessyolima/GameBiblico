@@ -1,6 +1,6 @@
 import { Gamepad2Icon, Home, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import styles from "./Final.module.scss";
 
@@ -13,7 +13,11 @@ import { obterOuCriarJogadorLocal } from "../../utils/jogadorLocal";
 
 export default function Final() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
+  const livroErrado = typeof location.state?.livroErrado === "string"
+    ? location.state.livroErrado
+    : "";
   const jogadorLocal = obterOuCriarJogadorLocal();
   const colocacao = jogadores.findIndex((jogador) => jogador.id === jogadorLocal.id) + 1;
   const textoColocacao = colocacao > 0 ? colocacao : "-";
@@ -34,6 +38,18 @@ export default function Final() {
     };
   }, []);
 
+  useEffect(() => {
+    function reiniciarComEnter(evento: KeyboardEvent) {
+      if (evento.key !== "Enter" || evento.repeat) return;
+
+      evento.preventDefault();
+      navigate("/jogatina");
+    }
+
+    window.addEventListener("keydown", reiniciarComEnter);
+    return () => window.removeEventListener("keydown", reiniciarComEnter);
+  }, [navigate]);
+
   return (
     <main className={styles.escopo}>
       <Cabecalho tituloPagina="Resumo" className={styles.secaoCabecalho} />
@@ -44,6 +60,10 @@ export default function Final() {
           <span className={styles.colocacaoDaPartida}>{textoColocacao}º</span>
           lugar!
         </p>
+        {livroErrado
+          ? <p className={styles.livroErrado}>Livro respondido incorretamente: {livroErrado}</p>
+          : null
+        }
       </section>
 
       <section className={styles.secaoCompartilharResultado}>
@@ -55,7 +75,7 @@ export default function Final() {
 
       {jogadores.length > 0
         ? <>
-            <Podio jogadores={jogadores.slice(0, 3)} />
+            <Podio jogadores={jogadores} />
             {jogadores.length > 3
               ? <DemaisJogadores estilo={styles.secaoListaDeJogadores} resumoPartida={true} jogadores={jogadores} />
               : null

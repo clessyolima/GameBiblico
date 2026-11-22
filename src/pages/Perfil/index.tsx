@@ -12,6 +12,7 @@ const padraoJogador: Jogador = {
   nome: "",
   id: "0",
   tempo: 0,
+  acertos: 0,
   avatar: 0,
   criado_em: new Date().toISOString()
 }

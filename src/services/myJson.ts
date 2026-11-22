@@ -1,4 +1,5 @@
 import type { Jogador } from "../interfaces/Jogador";
+import livros from "../utils/livros";
 
 const API_URL = "https://api.myjson.online/v2";
 
@@ -37,6 +38,18 @@ function criarCabecalho(comConteudo = false) {
   }
 
   return cabecalho;
+}
+
+function ordenarClassificacao(jogadores: Jogador[]) {
+  return jogadores.sort((a, b) => {
+    const aCompleto = a.acertos >= livros.length;
+    const bCompleto = b.acertos >= livros.length;
+
+    if (aCompleto !== bCompleto) return aCompleto ? -1 : 1;
+    if (aCompleto) return a.tempo - b.tempo;
+    if (a.acertos !== b.acertos) return b.acertos - a.acertos;
+    return a.tempo - b.tempo;
+  });
 }
 
 async function lerResposta(resposta: Response) {
@@ -111,22 +124,39 @@ export async function buscarClassificacao(): Promise<Jogador[]> {
     ? dados
     : dados.jogadores;
 
-  return jogadores
-    .map((jogador, indice) => ({
-      ...jogador,
-      id: jogador.id ?? `jogador-${indice + 1}`,
-      avatar: jogador.avatar ?? indice % 4,
-      criado_em: jogador.criado_em ?? new Date().toISOString(),
-    }))
-    .sort((a, b) => a.tempo - b.tempo);
+  const jogadoresNormalizados = jogadores.map((jogador, indice) => ({
+    ...jogador,
+    id: jogador.id ?? `jogador-${indice + 1}`,
+    acertos: jogador.acertos ?? 0,
+    avatar: jogador.avatar ?? indice % 4,
+    criado_em: jogador.criado_em ?? new Date().toISOString(),
+  }));
+
+  return ordenarClassificacao(jogadoresNormalizados);
+}
+
+export function partidaAtualMelhorQue(atual: Jogador, gravada: Jogador): boolean {
+  const atualCompleta = atual.acertos >= livros.length;
+  const gravadaCompleta = gravada.acertos >= livros.length;
+
+  if (atualCompleta !== gravadaCompleta) return atualCompleta;
+  if (atualCompleta) return atual.tempo < gravada.tempo;
+  if (atual.acertos !== gravada.acertos) return atual.acertos > gravada.acertos;
+  return atual.tempo < gravada.tempo;
 }
 
 export async function salvarJogadorNaClassificacao(jogador: Jogador): Promise<Jogador[]> {
   const jogadores = await buscarClassificacao();
-  const jogadoresAtualizados = [
+  const jogadorGravado = jogadores.find((item) => item.id === jogador.id);
+
+  if (jogadorGravado && !partidaAtualMelhorQue(jogador, jogadorGravado)) {
+    return jogadores;
+  }
+
+  const jogadoresAtualizados = ordenarClassificacao([
     ...jogadores.filter((item) => item.id !== jogador.id),
     jogador,
-  ].sort((a, b) => a.tempo - b.tempo);
+  ]);
 
   await alterarDadosMyJson<Jogador[]>(jogadoresAtualizados);
 

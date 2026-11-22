@@ -3,6 +3,7 @@ import styles from "./Podio.module.scss";
 import Avatar from "../Avatar";
 import { avatares } from "../../utils/avatares";
 import type { Jogador } from "../../interfaces/Jogador";
+import livros from "../../utils/livros";
 
 interface PodioProps {
   estilo?: string;
@@ -12,11 +13,14 @@ interface PodioProps {
 
 export default function Podio({ estilo, tamanhoAvatar, jogadores = [] }: PodioProps) {
   const ordemPodio = [1, 0, 2];
+  const jogadoresCompletos = jogadores
+    .filter((jogador) => jogador.acertos >= livros.length)
+    .slice(0, 3);
 
   return (
     <section className={`${styles.secaoPodio} ${estilo}`}>
       {ordemPodio.map((indiceJogador) => {
-        const jogador = jogadores[indiceJogador];
+        const jogador = jogadoresCompletos[indiceJogador];
         if (!jogador) return null;
         const posicao = indiceJogador + 1;
 

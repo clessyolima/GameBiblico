@@ -1,7 +1,8 @@
 // Escopo global da página
 .escopo {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   padding: 30px 20px;
   gap: 25px;
   display: flex;
@@ -15,7 +16,9 @@
 // Seção onde mostra o resultado da partida em qual posição o jogador ficou
 .secaoResultadoDaPartida {
   width: 100%;
+  gap: 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 
@@ -33,6 +36,11 @@
     .colocacaoDaPartida {
       color: var(--cor-terciaria);
     }
+  }
+
+  .livroErrado {
+    font-size: 14px;
+    text-align: center;
   }
 }
 

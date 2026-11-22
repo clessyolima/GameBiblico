@@ -67,5 +67,17 @@
       font-family: "Poppins";
       font-weight: 600;
     }
+
+    .resultadoColocado {
+      display: flex;
+      align-items: flex-end;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .acertosColocado {
+      font-size: 12px;
+      font-family: "Poppins";
+    }
   }
 }
