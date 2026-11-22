@@ -7,6 +7,8 @@ import ModalBase from "../../components/ModalBase";
 import livros from "../../utils/livros";
 import type { Livro } from "../../interfaces/Livros";
 import { useNavigate } from "react-router-dom";
+import { obterOuCriarJogadorLocal } from "../../utils/jogadorLocal";
+import { salvarJogadorNaClassificacao } from "../../services/myJson";
 
 const embaralharLivros = (arg: Livro[]) => {
   const a = arg.slice();
@@ -29,16 +31,35 @@ export default function Jogatina() {
   const livro = livrosDaPartida[indiceLivro];
   const livrosRestantes = livrosDaPartida.length - indiceLivro - 1;
 
-  function proximoLivro() {
+  const fimDaPartida = useCallback(() => {
+    const jogador = obterOuCriarJogadorLocal();
+    const jogadorDaPartida = {
+      ...jogador,
+      tempo: decorrente,
+      criado_em: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem("jogador", JSON.stringify(jogadorDaPartida));
+    salvarJogadorNaClassificacao(jogadorDaPartida).catch((erro: unknown) => {
+      console.error("Não foi possível salvar a partida:", erro);
+    });
+
+    navigate("/final", {
+      replace: true,
+      state: { tempo: decorrente }
+    });
+  }, [decorrente, navigate]);
+
+  const proximoLivro = useCallback(() => {
     if (indiceLivro >= livrosDaPartida.length - 1) {
       fimDaPartida();
       return;
     }
 
     setIndiceLivro((indiceAtual) => indiceAtual + 1);
-  } // Depois dos livros estarem sortido, seleciona sempre o primeiro item.
+  }, [fimDaPartida, indiceLivro, livrosDaPartida.length]); // Depois dos livros estarem sortido, seleciona sempre o primeiro item.
 
-  function correcao(testamentoEscolhido: string) {
+  const correcao = useCallback((testamentoEscolhido: string) => {
     const testamentoAtual = livro?.testamento;
     if (testamentoAtual === testamentoEscolhido) {
       proximoLivro();
@@ -46,14 +67,7 @@ export default function Jogatina() {
       return;
     };
     fimDaPartida(); // Finaliza a partida por resposta errada
-  } // Checagem se o Testamento escolhido corresponde com o Livro Atual
-
-  const fimDaPartida = useCallback(() => {
-    navigate("/final", {
-      replace: true,
-      state: { tempo: decorrente }
-    });
-  }, [decorrente, navigate]); // Finalizar partida
+  }, [fimDaPartida, livro?.testamento, proximoLivro]); // Checagem se o Testamento escolhido corresponde com o Livro Atual
 
   useEffect(() => {
     if (pausada) return;
@@ -73,6 +87,28 @@ export default function Jogatina() {
   useEffect(() => {
     if (faltante === 0) fimDaPartida();
   }, [faltante, fimDaPartida]);
+
+  useEffect(() => {
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
+    function responderPelaSeta(evento: KeyboardEvent) {
+      if (pausada || mostrarModal) return;
+      if (evento.repeat) return;
+
+      if (evento.key === "ArrowUp") {
+        evento.preventDefault();
+        correcao("antigo");
+      }
+
+      if (evento.key === "ArrowDown") {
+        evento.preventDefault();
+        correcao("novo");
+      }
+    }
+
+    window.addEventListener("keydown", responderPelaSeta);
+    return () => window.removeEventListener("keydown", responderPelaSeta);
+  }, [correcao, mostrarModal, pausada]);
 
   return (
     <main className={styles.escopo}>

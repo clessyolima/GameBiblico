@@ -1,19 +1,23 @@
-import { ordemPodio, podio } from "../../data/podio";
 import styles from "./Podio.module.scss";
 
 import Avatar from "../Avatar";
 import { avatares } from "../../utils/avatares";
+import type { Jogador } from "../../interfaces/Jogador";
 
 interface PodioProps {
   estilo?: string;
   tamanhoAvatar?: number;
+  jogadores?: Jogador[];
 }
 
-export default function Podio({ estilo, tamanhoAvatar }: PodioProps) {
+export default function Podio({ estilo, tamanhoAvatar, jogadores = [] }: PodioProps) {
+  const ordemPodio = [1, 0, 2];
+
   return (
     <section className={`${styles.secaoPodio} ${estilo}`}>
       {ordemPodio.map((indiceJogador) => {
-        const jogador = podio[indiceJogador];
+        const jogador = jogadores[indiceJogador];
+        if (!jogador) return null;
         const posicao = indiceJogador + 1;
 
         return (

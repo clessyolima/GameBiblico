@@ -1,5 +1,4 @@
 import type { JSX } from "react";
-import { demaisJogadores } from "../../data/demaisJogadores";
 import type { Jogador } from "../../interfaces/Jogador";
 
 import styles from "./DemaisJogadores.module.scss";
@@ -9,10 +8,12 @@ import { avatares } from "../../utils/avatares";
 interface DemaisJogadoresPorps {
   estilo?: string;
   resumoPartida?: boolean;
+  jogadores?: Jogador[];
 }
 
-export default function DemaisJogadores({ estilo, resumoPartida }: DemaisJogadoresPorps): JSX.Element {
+export default function DemaisJogadores({ estilo, resumoPartida, jogadores = [] }: DemaisJogadoresPorps): JSX.Element {
   const resumo = resumoPartida ? "efeitoCascata" : "";
+  const demaisJogadores = jogadores.slice(3);
 
   return (
     <section className={`${styles.secaoListaDeJogadores} ${estilo}`}>
