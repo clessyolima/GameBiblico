@@ -21,7 +21,7 @@ export default function DemaisJogadores({ estilo, resumoPartida, jogadores = [] 
     ...jogadoresIncompletos,
   ];
   const demaisJogadores = resumoPartida
-    ? listaDemaisJogadores.slice(0, 6)
+    ? jogadores.slice(3, 7)
     : listaDemaisJogadores;
 
   return (
@@ -40,7 +40,6 @@ export default function DemaisJogadores({ estilo, resumoPartida, jogadores = [] 
 
             <div className={styles.resultadoColocado}>
               <p className={styles.acertosColocado}>{jogador.acertos}/{livros.length} acertos</p>
-              <p className={styles.tempoColocado}>{jogador.tempo}seg</p>
             </div>
           </li>
         ))

@@ -33,7 +33,7 @@ export default function Jogatina() {
   const livro = livrosDaPartida[indiceLivro];
   const livrosRestantes = livrosDaPartida.length - indiceLivro - 1;
 
-  const fimDaPartida = useCallback((livroErrado?: string) => {
+  const fimDaPartida = useCallback((livroErrado?: string, respostaEscolhida?: string) => {
     if (partidaFinalizadaRef.current) return;
     partidaFinalizadaRef.current = true;
 
@@ -48,7 +48,7 @@ export default function Jogatina() {
     window.localStorage.setItem("jogador", JSON.stringify(jogadorDaPartida));
     const navegarParaResumo = () => navigate("/final", {
       replace: true,
-      state: { tempo: decorrente, livroErrado },
+      state: { tempo: decorrente, livroErrado, respostaEscolhida },
     });
 
     salvarJogadorNaClassificacao(jogadorDaPartida)
@@ -76,7 +76,7 @@ export default function Jogatina() {
       setFaltante(100);
       return;
     };
-    fimDaPartida(livro?.nome); // Finaliza a partida por resposta errada
+    fimDaPartida(livro?.nome, testamentoEscolhido); // Finaliza a partida por resposta errada
   }, [fimDaPartida, livro?.nome, livro?.testamento, proximoLivro]); // Checagem se o Testamento escolhido corresponde com o Livro Atual
 
   useEffect(() => {

@@ -10,21 +10,31 @@
     gap: 5px;
     display: flex;
     flex-direction: column;
+    width: 100%;
   }
 
-  .efeitoCascata li:nth-child(2) {
-    opacity: 0.8;
-    transform: translateY(-5px) scale(90%);
-  }
+  .efeitoCascata {
+    align-items: center;
 
-  .efeitoCascata li:nth-child(3) {
-    opacity: 0.7;
-    transform: translateY(-18px) scale(80%);
-  }
+    li {
+      align-self: center;
+    }
 
-  .efeitoCascata li:nth-child(4) {
-    opacity: 0.6;
-    transform: translateY(-38px) scale(70%);
+    li:nth-child(1) {
+      width: 100%;
+    }
+
+    li:nth-child(2) {
+      width: 95%;
+    }
+
+    li:nth-child(3) {
+      width: 90%;
+    }
+
+    li:nth-child(4) {
+      width: 85%;
+    }
   }
 
   .jogadorColocado {
